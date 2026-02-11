@@ -1,0 +1,61 @@
+{
+  "descripcion": "Volúmenes por clase de circunferencia para teca",
+  "unidad": "m³",
+  "medicion": "Circunferencia a 1.3m de la base",
+  "clases": [
+    {
+      "clase": "60-69",
+      "rangoMin": 60,
+      "rangoMax": 69,
+      "volumen": 0.183372
+    },
+    {
+      "clase": "70-79",
+      "rangoMin": 70,
+      "rangoMax": 79,
+      "volumen": 0.247307
+    },
+    {
+      "clase": "80-89",
+      "rangoMin": 80,
+      "rangoMax": 89,
+      "volumen": 0.323408
+    },
+    {
+      "clase": "90-99",
+      "rangoMin": 90,
+      "rangoMax": 99,
+      "volumen": 0.418145
+    },
+    {
+      "clase": "100-109",
+      "rangoMin": 100,
+      "rangoMax": 109,
+      "volumen": 0.495436
+    },
+    {
+      "clase": "110-119",
+      "rangoMin": 110,
+      "rangoMax": 119,
+      "volumen": 0.585027
+    },
+    {
+      "clase": "120-129",
+      "rangoMin": 120,
+      "rangoMax": 129,
+      "volumen": 0.679903
+    },
+    {
+      "clase": "130-139",
+      "rangoMin": 130,
+      "rangoMax": 139,
+      "volumen": 0.802256
+    },
+    {
+      "clase": "140-150",
+      "rangoMin": 140,
+      "rangoMax": 150,
+      "volumen": 0.901886
+    }
+  ]
+}

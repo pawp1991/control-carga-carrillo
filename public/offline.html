@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sin Conexión - Control de Carga de Teca</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        .icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+            background: #059669;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+        }
+        
+        h1 {
+            color: #059669;
+            margin-bottom: 15px;
+            font-size: 28px;
+        }
+        
+        p {
+            color: #6b7280;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        
+        .features {
+            background: #f3f4f6;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+        
+        .features h3 {
+            color: #374151;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .features ul {
+            list-style: none;
+        }
+        
+        .features li {
+            color: #6b7280;
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+        
+        .features li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #059669;
+            font-weight: bold;
+        }
+        
+        button {
+            background: #059669;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #047857;
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .offline {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .online {
+            background: #d1fae5;
+            color: #065f46;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">🌳</div>
+        <h1>Sin Conexión a Internet</h1>
+        <p>No te preocupes, puedes seguir usando la aplicación sin conexión. Todos tus datos se guardan localmente.</p>
+        
+        <div class="features">
+            <h3>Funcionalidades Disponibles:</h3>
+            <ul>
+                <li>Crear nuevos viajes</li>
+                <li>Registrar mediciones</li>
+                <li>Ver historial de viajes</li>
+                <li>Exportar datos a Excel</li>
+                <li>Ver resúmenes por clase</li>
+            </ul>
+        </div>
+        
+        <button onclick="location.reload()">
+            Reintentar Conexión
+        </button>
+        
+        <div class="status offline" id="status">
+            📡 Sin conexión a internet
+        </div>
+    </div>
+    
+    <script>
+        // Verificar estado de conexión
+        function updateOnlineStatus() {
+            const statusDiv = document.getElementById('status');
+            if (navigator.onLine) {
+                statusDiv.className = 'status online';
+                statusDiv.textContent = '✅ Conexión restaurada - Recargando...';
+                setTimeout(() => {
+                    window.location.href = '/control-carga-carrillo/';
+                }, 1500);
+            } else {
+                statusDiv.className = 'status offline';
+                statusDiv.textContent = '📡 Sin conexión a internet';
+            }
+        }
+        
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        
+        // Verificar cada 5 segundos
+        setInterval(updateOnlineStatus, 5000);
+    </script>
+</body>
+</html>
