@@ -15,72 +15,121 @@ export default function ControlCargaTeca() {
     '140-150': 0.901886
   };
 
+  // Estados para año, lote y consecutivo
+  const [ano, setAno] = useState(new Date().getFullYear().toString());
+  const [lote, setLote] = useState('');
   const [numeroViaje, setNumeroViaje] = useState('');
   const [mediciones, setMediciones] = useState([]);
   const [circunferenciaActual, setCircunferenciaActual] = useState('');
   const [todosLosViajes, setTodosLosViajes] = useState([]);
   const [viajeSeleccionado, setViajeSeleccionado] = useState(null);
   const [mostrarHistorial, setMostrarHistorial] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   // Cargar datos al iniciar
   useEffect(() => {
     cargarViajes();
   }, []);
 
-  // Cargar viajes desde el almacenamiento persistente
-  const cargarViajes = async () => {
-    try {
-      const result = await window.storage.list('viaje:', true);
-      if (result && result.keys) {
-        const viajesData = [];
-        for (const key of result.keys) {
-          try {
-            const viajeResult = await window.storage.get(key, true);
-            if (viajeResult) {
-              const viaje = JSON.parse(viajeResult.value);
-              viajesData.push(viaje);
-            }
-          } catch (err) {
-            console.log('Viaje no encontrado:', key);
-          }
-        }
-        setTodosLosViajes(viajesData.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion)));
-      }
-    } catch (error) {
-      console.log('No hay viajes previos o error al cargar');
+  // Generar número de viaje automáticamente cuando cambian año o lote
+  useEffect(() => {
+    if (ano && lote) {
+      generarNumeroViaje();
     }
-    setLoading(false);
+  }, [ano, lote]);
+
+  // Generar número de viaje con consecutivo automático
+  const generarNumeroViaje = () => {
+    try {
+      const viajes = JSON.parse(localStorage.getItem('viajes') || '[]');
+      
+      // Filtrar viajes del mismo año y lote
+      const viajesMismoAnoLote = viajes.filter(v => {
+        const partes = v.numeroViaje.split('-');
+        return partes[0] === ano && partes[1] === lote;
+      });
+
+      // Obtener el consecutivo más alto
+      let maxConsecutivo = 0;
+      viajesMismoAnoLote.forEach(v => {
+        const partes = v.numeroViaje.split('-');
+        const consecutivo = parseInt(partes[2]) || 0;
+        if (consecutivo > maxConsecutivo) {
+          maxConsecutivo = consecutivo;
+        }
+      });
+
+      // Generar nuevo consecutivo
+      const nuevoConsecutivo = (maxConsecutivo + 1).toString().padStart(3, '0');
+      const nuevoNumeroViaje = `${ano}-${lote}-${nuevoConsecutivo}`;
+      setNumeroViaje(nuevoNumeroViaje);
+    } catch (error) {
+      console.error('Error al generar número de viaje:', error);
+    }
+  };
+
+  // Cargar viajes desde localStorage
+  const cargarViajes = () => {
+    try {
+      const viajes = JSON.parse(localStorage.getItem('viajes') || '[]');
+      setTodosLosViajes(viajes.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion)));
+    } catch (error) {
+      console.error('Error al cargar viajes:', error);
+      setTodosLosViajes([]);
+    }
   };
 
   // Guardar viaje actual
-  const guardarViaje = async () => {
+  const guardarViaje = () => {
     if (!numeroViaje || mediciones.length === 0) {
       alert('Debe tener un número de viaje y al menos una medición');
       return;
     }
 
-    const resumen = calcularResumen();
-    const viaje = {
-      numeroViaje,
-      fechaCreacion: new Date().toISOString(),
-      mediciones,
-      resumen,
-      volumenTotal: Object.values(resumen).reduce((sum, r) => sum + r.volumenTotal, 0),
-      totalVarillas: mediciones.length
-    };
-
     try {
-      await window.storage.set(`viaje:${numeroViaje}`, JSON.stringify(viaje), true);
+      const resumen = calcularResumen();
+      const promedioCircunferencia = mediciones.reduce((sum, m) => sum + m.circunferencia, 0) / mediciones.length;
+      
+      const viaje = {
+        numeroViaje,
+        ano,
+        lote,
+        fechaCreacion: new Date().toISOString(),
+        mediciones,
+        resumen,
+        volumenTotal: Object.values(resumen).reduce((sum, r) => sum + r.volumenTotal, 0),
+        totalVarillas: mediciones.length,
+        promedioCircunferencia: promedioCircunferencia
+      };
+
+      // Obtener viajes existentes
+      const viajes = JSON.parse(localStorage.getItem('viajes') || '[]');
+      
+      // Verificar si ya existe un viaje con ese número
+      const indiceExistente = viajes.findIndex(v => v.numeroViaje === numeroViaje);
+      
+      if (indiceExistente >= 0) {
+        // Actualizar viaje existente
+        viajes[indiceExistente] = viaje;
+      } else {
+        // Agregar nuevo viaje
+        viajes.push(viaje);
+      }
+
+      // Guardar en localStorage
+      localStorage.setItem('viajes', JSON.stringify(viajes));
+      
       alert('Viaje guardado exitosamente');
-      await cargarViajes();
+      cargarViajes();
     } catch (error) {
-      alert('Error al guardar el viaje');
+      console.error('Error al guardar:', error);
+      alert('Error al guardar el viaje: ' + error.message);
     }
   };
 
   // Cargar un viaje del historial
   const cargarViajeHistorial = (viaje) => {
+    setAno(viaje.ano);
+    setLote(viaje.lote);
     setNumeroViaje(viaje.numeroViaje);
     setMediciones(viaje.mediciones);
     setViajeSeleccionado(viaje);
@@ -89,6 +138,8 @@ export default function ControlCargaTeca() {
 
   // Nuevo viaje
   const nuevoViaje = () => {
+    setAno(new Date().getFullYear().toString());
+    setLote('');
     setNumeroViaje('');
     setMediciones([]);
     setViajeSeleccionado(null);
@@ -104,24 +155,33 @@ export default function ControlCargaTeca() {
 
     const resumen = calcularResumen();
     const volumenTotalViaje = Object.values(resumen).reduce((sum, r) => sum + r.volumenTotal, 0);
+    const promedioCircunferencia = mediciones.reduce((sum, m) => sum + m.circunferencia, 0) / mediciones.length;
     
     // Crear contenido CSV
     let csv = '\uFEFF'; // BOM para UTF-8
     csv += `REPORTE DE CARGA DE TROZAS DE TECA\n`;
     csv += `Número de Viaje:,${numeroViaje}\n`;
+    csv += `Año:,${ano}\n`;
+    csv += `Lote:,${lote}\n`;
     csv += `Fecha:,${new Date().toLocaleDateString('es-CR')}\n`;
     csv += `Total de Varillas:,${mediciones.length}\n`;
+    csv += `Promedio de Circunferencia:,${promedioCircunferencia.toFixed(2)} cm\n`;
     csv += `Volumen Total:,${volumenTotalViaje.toFixed(6)} m³\n\n`;
     
-    // Resumen por clase
+    // Resumen por clase (solo clase y cantidad)
     csv += `RESUMEN POR CLASE DE CIRCUNFERENCIA\n`;
-    csv += `Clase (cm),Cantidad,Volumen Unitario (m³),Volumen Total (m³)\n`;
+    csv += `Clase (cm),Cantidad de Varillas\n`;
     
     Object.entries(resumen).forEach(([clase, datos]) => {
-      csv += `${clase},${datos.cantidad},${datos.volumenUnitario.toFixed(6)},${datos.volumenTotal.toFixed(6)}\n`;
+      if (datos.cantidad > 0) {
+        csv += `${clase},${datos.cantidad}\n`;
+      }
     });
     
-    csv += `TOTAL,,,${volumenTotalViaje.toFixed(6)}\n\n`;
+    csv += `\nTOTALES\n`;
+    csv += `Total de Varillas:,${mediciones.length}\n`;
+    csv += `Promedio de Circunferencia:,${promedioCircunferencia.toFixed(2)} cm\n`;
+    csv += `Volumen Total:,${volumenTotalViaje.toFixed(6)} m³\n\n`;
     
     // Detalle de mediciones
     csv += `DETALLE DE MEDICIONES\n`;
@@ -260,8 +320,37 @@ export default function ControlCargaTeca() {
             </div>
           </div>
           
-          {/* Número de Viaje */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Año, Lote y Número de Viaje */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Año
+              </label>
+              <input
+                type="number"
+                value={ano}
+                onChange={(e) => setAno(e.target.value)}
+                className="w-full px-4 py-2 border-2 border-emerald-300 rounded-lg focus:outline-none focus:border-emerald-500 text-lg font-semibold"
+                placeholder="2024"
+                min="2000"
+                max="2100"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Lote
+              </label>
+              <input
+                type="text"
+                value={lote}
+                onChange={(e) => setLote(e.target.value.toUpperCase())}
+                className="w-full px-4 py-2 border-2 border-emerald-300 rounded-lg focus:outline-none focus:border-emerald-500 text-lg font-semibold uppercase"
+                placeholder="A"
+                maxLength="3"
+              />
+            </div>
+
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Número de Viaje
@@ -269,9 +358,9 @@ export default function ControlCargaTeca() {
               <input
                 type="text"
                 value={numeroViaje}
-                onChange={(e) => setNumeroViaje(e.target.value)}
-                className="w-full px-4 py-2 border-2 border-emerald-300 rounded-lg focus:outline-none focus:border-emerald-500 text-lg font-semibold"
-                placeholder="Ej: V-001"
+                readOnly
+                className="w-full px-4 py-2 border-2 border-gray-300 bg-gray-100 rounded-lg text-lg font-semibold cursor-not-allowed"
+                placeholder="2024-A-001"
               />
             </div>
             
@@ -281,14 +370,14 @@ export default function ControlCargaTeca() {
                 className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-semibold flex items-center justify-center gap-2 transition-colors"
               >
                 <Database className="w-5 h-5" />
-                Guardar Viaje
+                Guardar
               </button>
               <button
                 onClick={exportarExcel}
                 className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-semibold flex items-center justify-center gap-2 transition-colors"
               >
                 <Download className="w-5 h-5" />
-                Exportar Excel
+                Excel
               </button>
             </div>
           </div>
@@ -317,12 +406,19 @@ export default function ControlCargaTeca() {
                         {viaje.totalVarillas} varillas
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mb-1">
+                    <p className="text-sm text-gray-600 mb-2">
                       {formatearFecha(viaje.fechaCreacion)}
                     </p>
-                    <p className="text-sm font-semibold text-emerald-700">
-                      Vol: {viaje.volumenTotal.toFixed(3)} m³
-                    </p>
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-emerald-700">
+                        Vol: {viaje.volumenTotal.toFixed(3)} m³
+                      </p>
+                      {viaje.promedioCircunferencia && (
+                        <p className="text-sm font-semibold text-blue-700">
+                          Ø: {viaje.promedioCircunferencia.toFixed(2)} cm
+                        </p>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -431,63 +527,55 @@ export default function ControlCargaTeca() {
               <table className="w-full text-sm">
                 <thead className="bg-emerald-100">
                   <tr>
-                    <th className="px-3 py-2 text-left">Clase (cm)</th>
-                    <th className="px-3 py-2 text-center">Cantidad</th>
-                    <th className="px-3 py-2 text-right">Vol. Unit. (m³)</th>
-                    <th className="px-3 py-2 text-right">Vol. Total (m³)</th>
+                    <th className="px-4 py-3 text-left">Clase (cm)</th>
+                    <th className="px-4 py-3 text-center">Cantidad de Varillas</th>
                   </tr>
                 </thead>
                 <tbody>
                   {Object.entries(resumen).map(([clase, datos]) => (
-                    <tr 
-                      key={clase} 
-                      className={`border-b ${datos.cantidad > 0 ? 'bg-emerald-50 font-semibold' : ''}`}
-                    >
-                      <td className="px-3 py-2">{clase}</td>
-                      <td className="px-3 py-2 text-center">
-                        {datos.cantidad > 0 ? (
-                          <span className="px-2 py-1 bg-emerald-600 text-white rounded-full text-xs">
+                    datos.cantidad > 0 && (
+                      <tr 
+                        key={clase} 
+                        className="border-b bg-emerald-50"
+                      >
+                        <td className="px-4 py-3 font-semibold">{clase}</td>
+                        <td className="px-4 py-3 text-center">
+                          <span className="px-3 py-1 bg-emerald-600 text-white rounded-full font-semibold">
                             {datos.cantidad}
                           </span>
-                        ) : (
-                          <span className="text-gray-400">0</span>
-                        )}
-                      </td>
-                      <td className="px-3 py-2 text-right text-gray-600">
-                        {datos.volumenUnitario.toFixed(6)}
-                      </td>
-                      <td className="px-3 py-2 text-right">
-                        {datos.cantidad > 0 ? (
-                          <span className="text-emerald-700">
-                            {datos.volumenTotal.toFixed(6)}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400">0.000000</span>
-                        )}
-                      </td>
-                    </tr>
+                        </td>
+                      </tr>
+                    )
                   ))}
                 </tbody>
                 <tfoot className="bg-emerald-700 text-white font-bold">
                   <tr>
-                    <td className="px-3 py-3" colSpan="3">TOTAL VIAJE</td>
-                    <td className="px-3 py-3 text-right text-lg">
-                      {volumenTotalViaje.toFixed(6)} m³
+                    <td className="px-4 py-3">TOTAL VARILLAS</td>
+                    <td className="px-4 py-3 text-center text-lg">
+                      {totalVarillas}
                     </td>
                   </tr>
                 </tfoot>
               </table>
             </div>
 
-            <div className="mt-4 p-4 bg-emerald-50 rounded-lg">
-              <div className="grid grid-cols-2 gap-4 text-center">
-                <div>
-                  <p className="text-sm text-gray-600">Total Varillas</p>
-                  <p className="text-2xl font-bold text-emerald-700">{totalVarillas}</p>
+            <div className="mt-6 p-4 bg-emerald-50 rounded-lg">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                <div className="p-3 bg-white rounded-lg shadow">
+                  <p className="text-sm text-gray-600 mb-1">Total Varillas</p>
+                  <p className="text-3xl font-bold text-emerald-700">{totalVarillas}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Volumen Total</p>
-                  <p className="text-2xl font-bold text-emerald-700">
+                <div className="p-3 bg-white rounded-lg shadow">
+                  <p className="text-sm text-gray-600 mb-1">Promedio Circunferencia</p>
+                  <p className="text-3xl font-bold text-emerald-700">
+                    {mediciones.length > 0 
+                      ? (mediciones.reduce((sum, m) => sum + m.circunferencia, 0) / mediciones.length).toFixed(2)
+                      : '0.00'} cm
+                  </p>
+                </div>
+                <div className="p-3 bg-white rounded-lg shadow">
+                  <p className="text-sm text-gray-600 mb-1">Volumen Total</p>
+                  <p className="text-3xl font-bold text-emerald-700">
                     {volumenTotalViaje.toFixed(3)} m³
                   </p>
                 </div>

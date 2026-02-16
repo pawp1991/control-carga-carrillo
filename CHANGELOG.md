@@ -5,6 +5,32 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.1.0] - 2026-02-11
+
+### Agregado
+- Sistema de número de viaje automático con año, lote y consecutivo
+- Campo separado para año (se inicializa con año actual)
+- Campo separado para lote (1-3 caracteres, convertido a mayúsculas automáticamente)
+- Generación automática de consecutivo por año y lote
+- Cálculo y visualización del promedio de circunferencia
+- Promedio de circunferencia en cuadro resumen
+- Promedio de circunferencia en tarjetas de historial
+- Promedio de circunferencia en exportación Excel
+
+### Cambiado
+- Cuadro resumen simplificado: solo muestra clase y cantidad de varillas
+- Eliminadas columnas de volumen unitario y volumen por clase de la tabla
+- Totales (varillas, promedio circunferencia, volumen) ahora en tarjetas grandes y visibles
+- Solo se muestran las clases que tienen varillas (no las vacías)
+- Sistema de almacenamiento cambió de window.storage a localStorage
+- Formato del número de viaje: ahora es YYYY-LOTE-###  (ej: 2024-A-001)
+
+### Corregido
+- **CRÍTICO**: Error "Error al guardar el viaje" - ahora usa localStorage estándar
+- Funcionalidad de guardar viajes ahora funciona correctamente
+- Historial de viajes ahora se carga y muestra correctamente
+- Persistencia de datos entre sesiones del navegador
+
 ## [1.0.0] - 2026-02-09
 
 ### Agregado
