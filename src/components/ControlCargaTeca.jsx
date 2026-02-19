@@ -358,10 +358,13 @@ export default function ControlCargaTeca() {
               <input
                 type="text"
                 value={numeroViaje}
-                readOnly
-                className="w-full px-4 py-2 border-2 border-gray-300 bg-gray-100 rounded-lg text-lg font-semibold cursor-not-allowed"
+                onChange={(e) => setNumeroViaje(e.target.value)}
+                className="w-full px-4 py-2 border-2 border-emerald-300 rounded-lg focus:outline-none focus:border-emerald-500 text-lg font-semibold"
                 placeholder="2024-A-001"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Se genera automático, pero puedes editarlo
+              </p>
             </div>
             
             <div className="flex gap-2 items-end">
