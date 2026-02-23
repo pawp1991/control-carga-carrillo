@@ -5,6 +5,28 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.2.0] - 2026-02-11
+
+### Agregado
+- Tabla de volúmenes por circunferencia específica (111 valores de 40 a 150 cm)
+- Interpolación lineal para circunferencias con decimales
+- Dos nuevas clases de visualización: 40-49 cm y 50-59 cm
+- Archivo volumenes-por-circunferencia.json con datos exactos
+- Archivo VolxCirc.xlsx de referencia con la tabla original
+
+### Cambiado
+- **IMPORTANTE**: Sistema de cálculo de volumen ahora usa valores exactos por circunferencia
+- Volumen total es mucho más preciso (usa volumen específico de cada árbol, no promedio de clase)
+- Rango de circunferencia expandido: ahora acepta desde 40 cm (antes 60 cm)
+- Clases ahora son solo para visualización en el resumen
+- Cada medición guarda su volumen exacto según su circunferencia específica
+- Placeholder actualizado a "40-150 cm" (antes "60-150 cm")
+
+### Mejorado
+- Mayor precisión en cálculo de volumen total del viaje
+- Soporte para decimales en circunferencia (ej: 85.5 cm)
+- Diferenciación precisa entre árboles de la misma clase pero diferente circunferencia
+
 ## [1.1.1] - 2026-02-11
 
 ### Cambiado

@@ -1,18 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, FileText, Download, History, Database } from 'lucide-react';
+import volumenesPorCircunferencia from '../volumenes-por-circunferencia.json';
 
 export default function ControlCargaTeca() {
-  // Datos de volumen por clase desde el archivo Excel
-  const clasesVolumen = {
-    '60-69': 0.183372,
-    '70-79': 0.247307,
-    '80-89': 0.323408,
-    '90-99': 0.418145,
-    '100-109': 0.495436,
-    '110-119': 0.585027,
-    '120-129': 0.679903,
-    '130-139': 0.802256,
-    '140-150': 0.901886
+  // Datos de volumen por circunferencia específica (de 40 a 150 cm)
+  const volumenesCirc = volumenesPorCircunferencia;
+
+  // Clases solo para visualización en el resumen
+  const clasesVisualizacion = {
+    '40-49': { min: 40, max: 49 },
+    '50-59': { min: 50, max: 59 },
+    '60-69': { min: 60, max: 69 },
+    '70-79': { min: 70, max: 79 },
+    '80-89': { min: 80, max: 89 },
+    '90-99': { min: 90, max: 99 },
+    '100-109': { min: 100, max: 109 },
+    '110-119': { min: 110, max: 119 },
+    '120-129': { min: 120, max: 129 },
+    '130-139': { min: 130, max: 139 },
+    '140-150': { min: 140, max: 150 }
   };
 
   // Estados para año, lote y consecutivo
@@ -36,6 +42,33 @@ export default function ControlCargaTeca() {
       generarNumeroViaje();
     }
   }, [ano, lote]);
+
+  // Función para obtener volumen exacto por circunferencia con interpolación
+  const obtenerVolumen = (circunferencia) => {
+    const circ = parseFloat(circunferencia);
+    
+    // Si está fuera del rango
+    if (circ < 40 || circ > 150) {
+      return 0;
+    }
+
+    // Si la circunferencia es un número entero y existe en la tabla
+    const circEntera = Math.round(circ);
+    if (volumenesCirc[circEntera.toString()]) {
+      return volumenesCirc[circEntera.toString()];
+    }
+
+    // Si tiene decimales, interpolar entre los dos valores más cercanos
+    const circBaja = Math.floor(circ);
+    const circAlta = Math.ceil(circ);
+    
+    const volBajo = volumenesCirc[circBaja.toString()] || 0;
+    const volAlto = volumenesCirc[circAlta.toString()] || 0;
+    
+    // Interpolación lineal
+    const factor = circ - circBaja;
+    return volBajo + (volAlto - volBajo) * factor;
+  };
 
   // Generar número de viaje con consecutivo automático
   const generarNumeroViaje = () => {
@@ -216,9 +249,11 @@ export default function ControlCargaTeca() {
     });
   };
 
-  // Función para clasificar la circunferencia
+  // Función para clasificar la circunferencia (solo para visualización)
   const clasificarCircunferencia = (circ) => {
     const c = parseFloat(circ);
+    if (c >= 40 && c <= 49) return '40-49';
+    if (c >= 50 && c <= 59) return '50-59';
     if (c >= 60 && c <= 69) return '60-69';
     if (c >= 70 && c <= 79) return '70-79';
     if (c >= 80 && c <= 89) return '80-89';
@@ -239,17 +274,19 @@ export default function ControlCargaTeca() {
     }
 
     const circ = parseFloat(circunferenciaActual);
-    if (isNaN(circ) || circ < 60 || circ > 150) {
-      alert('La circunferencia debe estar entre 60 y 150 cm');
+    if (isNaN(circ) || circ < 40 || circ > 150) {
+      alert('La circunferencia debe estar entre 40 y 150 cm');
       return;
     }
 
     const clase = clasificarCircunferencia(circ);
+    const volumen = obtenerVolumen(circ); // Volumen exacto según circunferencia
+    
     const nuevaMedicion = {
       consecutivo: mediciones.length + 1,
       circunferencia: circ,
       clase: clase,
-      volumen: clasesVolumen[clase] || 0,
+      volumen: volumen, // Ahora usa volumen exacto, no promedio de clase
       fecha: new Date().toISOString()
     };
 
@@ -265,22 +302,23 @@ export default function ControlCargaTeca() {
     setMediciones(nuevasMediciones);
   };
 
-  // Calcular resumen por clase
+  // Calcular resumen por clase (solo para visualización)
   const calcularResumen = () => {
     const resumen = {};
     
-    Object.keys(clasesVolumen).forEach(clase => {
+    // Inicializar todas las clases
+    Object.keys(clasesVisualizacion).forEach(clase => {
       resumen[clase] = {
         cantidad: 0,
-        volumenUnitario: clasesVolumen[clase],
         volumenTotal: 0
       };
     });
 
+    // Contar varillas y sumar volúmenes exactos por clase
     mediciones.forEach(m => {
       if (m.clase !== 'Fuera de rango') {
         resumen[m.clase].cantidad += 1;
-        resumen[m.clase].volumenTotal += m.volumen;
+        resumen[m.clase].volumenTotal += m.volumen; // Suma volúmenes exactos
       }
     });
 
@@ -446,9 +484,9 @@ export default function ControlCargaTeca() {
                 onChange={(e) => setCircunferenciaActual(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && agregarMedicion()}
                 className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500"
-                placeholder="Ej: 85"
+                placeholder="Ej: 85 (40-150 cm)"
                 step="0.1"
-                min="60"
+                min="40"
                 max="150"
               />
             </div>
