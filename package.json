@@ -1,6 +1,6 @@
 {
   "name": "control-carga-carrillo",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Sistema de control de carga de trozas de teca con clasificación por circunferencia",
   "type": "module",
   "scripts": {

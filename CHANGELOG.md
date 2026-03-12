@@ -5,6 +5,22 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.2.1] - 2026-02-11
+
+### Agregado
+- Botón 🔄 para generar consecutivo automático junto al campo de número de viaje
+- Control manual completo del número de viaje en todo momento
+
+### Cambiado
+- Eliminada generación automática del número de viaje al cambiar año/lote
+- Ahora el usuario decide cuándo generar el consecutivo (manual o con botón)
+- El número de viaje no se sobrescribe al cargar un viaje guardado
+
+### Corregido
+- **CRÍTICO**: Problema donde el número de viaje se regeneraba al editar viajes guardados
+- Ahora se puede abrir un viaje días después y el número permanece editable sin cambios automáticos
+- El consecutivo ya no genera problemas al volver a abrir viajes
+
 ## [1.2.0] - 2026-02-11
 
 ### Agregado

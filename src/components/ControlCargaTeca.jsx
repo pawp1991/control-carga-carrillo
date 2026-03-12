@@ -36,13 +36,6 @@ export default function ControlCargaTeca() {
     cargarViajes();
   }, []);
 
-  // Generar número de viaje automáticamente cuando cambian año o lote
-  useEffect(() => {
-    if (ano && lote) {
-      generarNumeroViaje();
-    }
-  }, [ano, lote]);
-
   // Función para obtener volumen exacto por circunferencia con interpolación
   const obtenerVolumen = (circunferencia) => {
     const circ = parseFloat(circunferencia);
@@ -171,7 +164,8 @@ export default function ControlCargaTeca() {
 
   // Nuevo viaje
   const nuevoViaje = () => {
-    setAno(new Date().getFullYear().toString());
+    const anoActual = new Date().getFullYear().toString();
+    setAno(anoActual);
     setLote('');
     setNumeroViaje('');
     setMediciones([]);
@@ -393,15 +387,25 @@ export default function ControlCargaTeca() {
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Número de Viaje
               </label>
-              <input
-                type="text"
-                value={numeroViaje}
-                onChange={(e) => setNumeroViaje(e.target.value)}
-                className="w-full px-4 py-2 border-2 border-emerald-300 rounded-lg focus:outline-none focus:border-emerald-500 text-lg font-semibold"
-                placeholder="2024-A-001"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={numeroViaje}
+                  onChange={(e) => setNumeroViaje(e.target.value)}
+                  className="flex-1 px-4 py-2 border-2 border-emerald-300 rounded-lg focus:outline-none focus:border-emerald-500 text-lg font-semibold"
+                  placeholder="2024-A-001"
+                />
+                <button
+                  onClick={generarNumeroViaje}
+                  disabled={!ano || !lote}
+                  className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  title="Generar consecutivo automático"
+                >
+                  🔄
+                </button>
+              </div>
               <p className="text-xs text-gray-500 mt-1">
-                Se genera automático, pero puedes editarlo
+                Editable manualmente o genera consecutivo con el botón 🔄
               </p>
             </div>
             
